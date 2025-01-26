@@ -16,6 +16,7 @@
             color: white;
             text-align: center;
             padding: 1rem 0;
+            margin: 0;
         }
         header img {
             width: 100%;
@@ -82,6 +83,74 @@
         li button:hover {
             background-color: #b71c1c;
         }
+        .poster-container {
+            width: 210mm;
+            height: 297mm;
+            background-color: #e8f5e9;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .poster-container header {
+            margin: 0;
+            padding: 0;
+        }
+        .poster-content {
+            flex: 1;
+            padding: 10mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 5mm;
+        }
+        .match-day {
+            margin-bottom: 2rem;
+            width: 100%;
+        }
+        .match-day h2 {
+            background-color: #2e7d32;
+            color: white;
+            padding: 0.5rem;
+            text-align: center;
+            margin: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .match {
+            display: flex;
+            justify-content: flex-start;
+            gap: 2rem;
+            font-size: 1.1rem;
+        }
+        .match-number {
+            font-weight: bold;
+            color: black;
+            min-width: 2rem;
+        }
+        .red {
+            color: red;
+            font-weight: bold;
+            flex: 1;
+            text-align: left;
+        }
+        .blue {
+            color: blue;
+            font-weight: bold;
+            flex: 1;
+            text-align: left;
+        }
+        footer {
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        footer img {
+            width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -100,7 +169,8 @@
             <input type="text" id="blue-team" name="blue-team" placeholder="Nombre de los jugadores en azul" required>
 
             <button type="button" onclick="addMatch()">Añadir Partido</button>
-            <button type="button" onclick="generatePoster()">Sortu kartela</button>
+            <!button type="button" onclick="generatePoster()">Generar HTML</button!>
+            <button type="button" onclick="generatePosterImage()">Generar Imagen</button>
         </form>
 
         <div id="match-list">
@@ -111,6 +181,19 @@
         </div>
     </div>
 
+    <!-- Poster invisible para generar la imagen -->
+    <div id="poster" class="poster-container" style="display: none;">
+        <header>
+            <img src="hasiera.jpg" alt="Hasiera">
+        </header>
+        <div class="poster-content"></div>
+        <footer>
+            <img src="footer.jpg" alt="Footer">
+        </footer>
+    </div>
+
+    <!-- Importar html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
         let matches = JSON.parse(localStorage.getItem("matches")) || [];
 
@@ -121,9 +204,8 @@
 
             if (date && redTeam && blueTeam) {
                 matches.push({ date, redTeam, blueTeam });
-                matches.sort((a, b) => new Date(a.date) - new Date(b.date)); // Ordenar por fecha
-
-                localStorage.setItem("matches", JSON.stringify(matches)); // Guardar en localStorage
+                matches.sort((a, b) => new Date(a.date) - new Date(b.date));
+                localStorage.setItem("matches", JSON.stringify(matches));
                 renderMatches();
                 document.getElementById('match-form').reset();
             } else {
@@ -150,7 +232,7 @@
 
         function deleteMatch(index) {
             matches.splice(index, 1);
-            localStorage.setItem("matches", JSON.stringify(matches)); // Guardar en localStorage
+            localStorage.setItem("matches", JSON.stringify(matches));
             renderMatches();
         }
 
@@ -163,109 +245,55 @@
             }, {});
         }
 
-function generatePoster() {
-    if (matches.length === 0) {
-        alert("No hay partidos para generar el cartel.");
-        return;
-    }
+        function generatePoster() {
+            const posterContent = document.querySelector('.poster-content');
+            posterContent.innerHTML = '';
 
-    const groupedMatches = groupMatchesByDate(matches);
-    let posterHTML = `
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>"UNI" Markina-Xemein Zesta Punta</title>
-        <style>
-            body { font-family: Arial, sans-serif; background-color: #e8f5e9; margin: 0; padding: 0; }
-            header { background-color: #4caf50; color: white; text-align: center; padding: 1rem 0; }
-            .container { padding: 2rem; display: flex; flex-direction: column; align-items: center; }
-            .match-day { margin-bottom: 2rem; width: 100%; max-width: 800px; }
-            .match-day h2 { background-color: #2e7d32; color: white; padding: 0.5rem; text-align: center; }
-            .match { display: flex; justify-content: space-between; background: white; margin: 0.5rem 0; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px; }
-            .red { color: red; }
-            .blue { color: blue; }
-            footer { text-align: center; margin-top: 2rem; padding: 1rem; background-color: #4caf50; color: white; }
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #4caf50;
-            color: white;
-            text-align: center;
-            padding: 1rem 0;
-        }
-        header img {
-            width: 100%;
-            height: auto;
-        }
-        .container {
-            padding: 2rem;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        </style>
-    </head>
-    <body>
-        <header>
-            <img src="imgs/hasiera.jpg" alt="Hasiera">
-            <h1>"UNI" Markina-Xemein Zesta Punta</h1>
-        </header>
-        <div class="container">
-    `;
+            const groupedMatches = groupMatchesByDate(matches);
 
-    for (const date in groupedMatches) {
-        const dayMatches = groupedMatches[date];
-        const time = dayMatches[0].date.split("T")[1].slice(0, 5);
-        const formattedDate = new Date(date).toLocaleDateString("es-ES", { month: "long", day: "numeric" });
+            for (const date in groupedMatches) {
+                const dayMatches = groupedMatches[date];
 
-        posterHTML += `
-            <div class="match-day">
-                <h2>${formattedDate} - ${time}</h2>
-        `;
-        dayMatches.forEach(match => {
-            posterHTML += `
-                <div class="match">
-                    <span class="red">${match.redTeam}</span>
-                    <span class="blue">${match.blueTeam}</span>
-                </div>
-            `;
-        });
-        posterHTML += `</div>`;
-    }
+                // Obtener la hora del primer partido
+                const firstMatchTime = new Date(dayMatches[0].date).toLocaleTimeString('eu-ES', { hour: '2-digit', minute: '2-digit' }).replace(':', ':');
 
-    posterHTML += `
-        </div>
-        <footer>
-            <p>Organizado por Markina-Xemein Zesta Punta</p>
-        </footer>
-    </body>
-    </html>
-    `;
+                // Crear el encabezado con la fecha y hora
+                const formattedDate = `URRIAK ${new Date(date).getDate()} ${firstMatchTime}`;
+                const dayContainer = document.createElement('div');
+                dayContainer.classList.add('match-day');
+                dayContainer.innerHTML = `<h2><b>${formattedDate}</b></h2>`;
 
-    const blob = new Blob([posterHTML], { type: "text/html" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "partiduk.html";
-    a.click();
-}
+                // Añadir los partidos del día
+                dayMatches.forEach((match, index) => {
+                    const matchDiv = document.createElement('div');
+                    matchDiv.classList.add('match');
+                    matchDiv.innerHTML = `
+                        <span class="match-number">${index + 1}</span>
+                        <span class="red">${match.redTeam}</span>
+                        <span class="blue">${match.blueTeam}</span>
+                    `;
+                    dayContainer.appendChild(matchDiv);
+                });
 
+                posterContent.appendChild(dayContainer);
+            }
 
-        function saveCurrentState() {
-            const data = document.documentElement.outerHTML;
-            const blob = new Blob([data], { type: "text/html" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = "admin.html";
-            a.click();
+            document.getElementById('poster').style.display = 'flex';
         }
 
-        // Renderizar partidos almacenados al cargar la página
+        function generatePosterImage() {
+            generatePoster();
+
+            const poster = document.getElementById('poster');
+            html2canvas(poster, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'partiduk.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 1.0);
+                link.click();
+                poster.style.display = 'none';
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', renderMatches);
     </script>
 </body>
