@@ -155,26 +155,26 @@
 </head>
 <body>
     <header>
-        <h1>Administrar Partidos</h1>
+        <h1>Partiduen administratzailea</h1>
     </header>
     <div class="container">
         <form id="match-form">
-            <label for="date">Fecha y hora:</label>
+            <label for="date">Data eta ordua:</label>
             <input type="datetime-local" id="date" name="date" required>
 
-            <label for="red-team">Equipo Rojo:</label>
+            <label for="red-team">Bikote Gorria:</label>
             <input type="text" id="red-team" name="red-team" placeholder="Nombre de los jugadores en rojo" required>
 
-            <label for="blue-team">Equipo Azul:</label>
+            <label for="blue-team">Bikote Urdina:</label>
             <input type="text" id="blue-team" name="blue-team" placeholder="Nombre de los jugadores en azul" required>
 
-            <button type="button" onclick="addMatch()">Añadir Partido</button>
+            <button type="button" onclick="addMatch()">Partidua Geitu</button>
             <!button type="button" onclick="generatePoster()">Generar HTML</button!>
-            <button type="button" onclick="generatePosterImage()">Generar Imagen</button>
+            <button type="button" onclick="generatePosterImage()">Kartela Sortu</button>
         </form>
 
         <div id="match-list">
-            <h2>Lista de Partidos</h2>
+            <h2>Partidu Sorta</h2>
             <ul id="matches">
                 <!-- Los partidos añadidos aparecerán aquí -->
             </ul>
