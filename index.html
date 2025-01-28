@@ -100,7 +100,7 @@
         }
         .poster-content {
             flex: 1;
-            padding: 10mm;
+            padding: 1mm;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -248,41 +248,62 @@
             }, {});
         }
 
-        function generatePoster() {
-            const posterContent = document.querySelector('.poster-content');
-            posterContent.innerHTML = '';
+function generatePoster() {
+    const posterContent = document.querySelector('.poster-content');
+    posterContent.innerHTML = '';
 
-            const groupedMatches = groupMatchesByDate(matches);
+    // Array con los nombres de los meses en euskera
+    const monthsInBasque = [
+        "URTARRILAK", // Enero
+        "OTSAILAK",   // Febrero
+        "MARTXOAK",   // Marzo
+        "APIRILAK",   // Abril
+        "MAIATZAK",   // Mayo
+        "EKAINAK",    // Junio
+        "UZTAILAK",   // Julio
+        "ABUZTUAK",   // Agosto
+        "IRAILAK",    // Septiembre
+        "URRIAK",     // Octubre
+        "AZAROAK",    // Noviembre
+        "ABENDUAK"    // Diciembre
+    ];
 
-            for (const date in groupedMatches) {
-                const dayMatches = groupedMatches[date];
+    const groupedMatches = groupMatchesByDate(matches);
 
-                // Obtener la hora del primer partido
-                const firstMatchTime = new Date(dayMatches[0].date).toLocaleTimeString('eu-ES', { hour: '2-digit', minute: '2-digit' }).replace(':', ':');
+    for (const date in groupedMatches) {
+        const dayMatches = groupedMatches[date];
 
-                // Crear el encabezado con la fecha y hora
-                const formattedDate = `URRIAK ${new Date(date).getDate()} ${firstMatchTime}`;
-                const dayContainer = document.createElement('div');
-                dayContainer.classList.add('match-day');
-                dayContainer.innerHTML = `<h2><b>${formattedDate}</b></h2>`;
+        // Obtener la hora del primer partido
+        const firstMatchTime = new Date(dayMatches[0].date).toLocaleTimeString('eu-ES', { hour: '2-digit', minute: '2-digit' }).replace(':', ':');
 
-                // Añadir los partidos del día
-                dayMatches.forEach((match, index) => {
-                    const matchDiv = document.createElement('div');
-                    matchDiv.classList.add('match');
-                    matchDiv.innerHTML = `
-                        <span class="match-number">${index + 1}</span>
-                        <span class="red">${match.redTeam}</span>
-                        <span class="blue">${match.blueTeam}</span>
-                    `;
-                    dayContainer.appendChild(matchDiv);
-                });
+        // Obtener el nombre del mes en euskera
+        const dateObj = new Date(date);
+        const monthName = monthsInBasque[dateObj.getMonth()];
+        const dayNumber = dateObj.getDate();
 
-                posterContent.appendChild(dayContainer);
-            }
+        // Crear el encabezado con la fecha y hora
+        const formattedDate = `${monthName} ${dayNumber} ${firstMatchTime}`;
+        const dayContainer = document.createElement('div');
+        dayContainer.classList.add('match-day');
+        dayContainer.innerHTML = `<h2><b>${formattedDate}</b></h2>`;
 
-            document.getElementById('poster').style.display = 'flex';
-        }
+        // Añadir los partidos del día
+        dayMatches.forEach((match, index) => {
+            const matchDiv = document.createElement('div');
+            matchDiv.classList.add('match');
+            matchDiv.innerHTML = `
+                <span class="match-number">${index + 1}</span>
+                <span class="red">${match.redTeam}</span>
+                <span class="blue">${match.blueTeam}</span>
+            `;
+            dayContainer.appendChild(matchDiv);
+        });
+
+        posterContent.appendChild(dayContainer);
+    }
+
+    document.getElementById('poster').style.display = 'flex';
+}
 
         function generatePosterImage() {
             generatePoster();
