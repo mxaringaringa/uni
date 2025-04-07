@@ -85,7 +85,8 @@
         }
         .poster-container {
             width: 210mm;
-            height: 297mm;
+            min-height: 297mm;
+			height: auto;
             background-color: #e8f5e9;
             margin: 0;
             padding: 0;
@@ -107,7 +108,7 @@
             gap: 5mm;
         }
         .match-day {
-            margin-bottom: 2rem;
+            margin-bottom: 0.5rem;
             width: 100%;
         }
         .match-day h2 {
@@ -197,128 +198,129 @@
 
     <!-- Importar html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script>
-        let matches = JSON.parse(localStorage.getItem("matches")) || [];
+<script>
+    let matches = JSON.parse(localStorage.getItem("matches")) || [];
 
-        function addMatch() {
-            const date = document.getElementById('date').value;
-            const redTeam = document.getElementById('red-team').value;
-            const blueTeam = document.getElementById('blue-team').value;
+    function addMatch() {
+        const date = document.getElementById('date').value;
+        const redTeam = document.getElementById('red-team').value;
+        const blueTeam = document.getElementById('blue-team').value;
 
-            if (date && redTeam && blueTeam) {
-                matches.push({ date, redTeam, blueTeam });
-                matches.sort((a, b) => new Date(a.date) - new Date(b.date));
-                localStorage.setItem("matches", JSON.stringify(matches));
-                renderMatches();
-                document.getElementById('match-form').reset();
-            } else {
-                alert('Por favor, completa todos los campos.');
-            }
-        }
-
-        function renderMatches() {
-            const matchList = document.getElementById('matches');
-            matchList.innerHTML = '';
-
-            matches.forEach((match, index) => {
-                const li = document.createElement('li');
-                li.textContent = `${match.date}: ${match.redTeam} vs ${match.blueTeam}`;
-
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Eliminar';
-                deleteButton.onclick = () => deleteMatch(index);
-
-                li.appendChild(deleteButton);
-                matchList.appendChild(li);
-            });
-        }
-
-        function deleteMatch(index) {
-            matches.splice(index, 1);
+        if (date && redTeam && blueTeam) {
+            matches.push({ date, redTeam, blueTeam });
+            matches.sort((a, b) => new Date(a.date) - new Date(b.date));
             localStorage.setItem("matches", JSON.stringify(matches));
             renderMatches();
+            document.getElementById('match-form').reset();
+        } else {
+            alert('Por favor, completa todos los campos.');
         }
-
-        function groupMatchesByDate(matches) {
-            return matches.reduce((groups, match) => {
-                const date = match.date.split("T")[0];
-                if (!groups[date]) groups[date] = [];
-                groups[date].push(match);
-                return groups;
-            }, {});
-        }
-
-function generatePoster() {
-    const posterContent = document.querySelector('.poster-content');
-    posterContent.innerHTML = '';
-
-    // Array con los nombres de los meses en euskera
-    const monthsInBasque = [
-        "URTARRILAK", // Enero
-        "OTSAILAK",   // Febrero
-        "MARTXOAK",   // Marzo
-        "APIRILAK",   // Abril
-        "MAIATZAK",   // Mayo
-        "EKAINAK",    // Junio
-        "UZTAILAK",   // Julio
-        "ABUZTUAK",   // Agosto
-        "IRAILAK",    // Septiembre
-        "URRIAK",     // Octubre
-        "AZAROAK",    // Noviembre
-        "ABENDUAK"    // Diciembre
-    ];
-
-    const groupedMatches = groupMatchesByDate(matches);
-
-    for (const date in groupedMatches) {
-        const dayMatches = groupedMatches[date];
-
-        // Obtener la hora del primer partido
-        const firstMatchTime = new Date(dayMatches[0].date).toLocaleTimeString('eu-ES', { hour: '2-digit', minute: '2-digit' }).replace(':', ':');
-
-        // Obtener el nombre del mes en euskera
-        const dateObj = new Date(date);
-        const monthName = monthsInBasque[dateObj.getMonth()];
-        const dayNumber = dateObj.getDate();
-
-        // Crear el encabezado con la fecha y hora
-        const formattedDate = `${monthName} ${dayNumber} ${firstMatchTime}`;
-        const dayContainer = document.createElement('div');
-        dayContainer.classList.add('match-day');
-        dayContainer.innerHTML = `<h2><b>${formattedDate}</b></h2>`;
-
-        // Añadir los partidos del día
-        dayMatches.forEach((match, index) => {
-            const matchDiv = document.createElement('div');
-            matchDiv.classList.add('match');
-            matchDiv.innerHTML = `
-                <span class="match-number">${index + 1}</span>
-                <span class="red">${match.redTeam}</span>
-                <span class="blue">${match.blueTeam}</span>
-            `;
-            dayContainer.appendChild(matchDiv);
-        });
-
-        posterContent.appendChild(dayContainer);
     }
 
-    document.getElementById('poster').style.display = 'flex';
-}
+    function renderMatches() {
+        const matchList = document.getElementById('matches');
+        matchList.innerHTML = '';
 
-        function generatePosterImage() {
-            generatePoster();
+        matches.forEach((match, index) => {
+            const li = document.createElement('li');
+            li.textContent = `${match.date}: ${match.redTeam} vs ${match.blueTeam}`;
 
-            const poster = document.getElementById('poster');
-            html2canvas(poster, { scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'partiduk.jpg';
-                link.href = canvas.toDataURL('image/jpeg', 1.0);
-                link.click();
-                poster.style.display = 'none';
-            });
-        }
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Eliminar';
+            deleteButton.onclick = () => deleteMatch(index);
 
-        document.addEventListener('DOMContentLoaded', renderMatches);
-    </script>
+            li.appendChild(deleteButton);
+            matchList.appendChild(li);
+        });
+    }
+
+    function deleteMatch(index) {
+        matches.splice(index, 1);
+        localStorage.setItem("matches", JSON.stringify(matches));
+        renderMatches();
+    }
+
+	function groupMatchesByDate(matches) {
+		return matches.reduce((groups, match) => {
+			const matchDate = new Date(match.date);
+			const dateStr = match.date.split("T")[0];
+			const hour = matchDate.getHours();
+			const timeSlot = hour < 14 ? 'goizean' : 'arratsaldean'; // En euskera directamente
+			const groupKey = `${dateStr}___${timeSlot}`; // separador único para evitar problemas con el formato de fecha
+
+			if (!groups[groupKey]) groups[groupKey] = [];
+			groups[groupKey].push(match);
+			return groups;
+		}, {});
+	}
+
+	function generatePoster() {
+		const posterContent = document.querySelector('.poster-content');
+		posterContent.innerHTML = '';
+
+		const monthsInBasque = [
+			"URTARRILAK", "OTSAILAK", "MARTXOAK", "APIRILAK",
+			"MAIATZAK", "EKAINAK", "UZTAILAK", "ABUZTUAK",
+			"IRAILAK", "URRIAK", "AZAROAK", "ABENDUAK"
+		];
+
+		const groupedMatches = groupMatchesByDate(matches);
+
+		for (const key in groupedMatches) {
+			const [date, timeSlot] = key.split("___"); // Usamos el separador único para evitar errores
+			const dayMatches = groupedMatches[key];
+
+			// ⚠️ Usamos el primer partido de este grupo, no de todos los partidos
+			const firstMatchDate = new Date(dayMatches[0].date);
+			const formattedTime = firstMatchDate.toLocaleTimeString('eu-ES', {
+				hour: '2-digit',
+				minute: '2-digit'
+			});
+
+			const dateObj = new Date(date);
+			const monthName = monthsInBasque[dateObj.getMonth()];
+			const dayNumber = dateObj.getDate();
+
+			const timeSlotLabel = timeSlot === 'goizean' ? 'GOIZEAN' : 'ARRATSALDEAN';
+			const formattedDate = `${monthName} ${dayNumber} - ${timeSlotLabel} (${formattedTime})`;
+
+			const dayContainer = document.createElement('div');
+			dayContainer.classList.add('match-day');
+			dayContainer.innerHTML = `<h2><b>${formattedDate}</b></h2>`;
+
+			dayMatches.forEach((match, index) => {
+				const matchDiv = document.createElement('div');
+				matchDiv.classList.add('match');
+				matchDiv.innerHTML = `
+					<span class="match-number">${index + 1}</span>
+					<span class="red">${match.redTeam}</span>
+					<span class="blue">${match.blueTeam}</span>
+				`;
+				dayContainer.appendChild(matchDiv);
+			});
+
+			posterContent.appendChild(dayContainer);
+		}
+
+		document.getElementById('poster').style.display = 'flex';
+	}
+
+
+    function generatePosterImage() {
+        generatePoster();
+
+        const poster = document.getElementById('poster');
+        html2canvas(poster, { scale: 2 }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'partiduk.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 1.0);
+            link.click();
+            poster.style.display = 'none';
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', renderMatches);
+</script>
+
 </body>
 </html>
