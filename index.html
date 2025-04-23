@@ -86,7 +86,7 @@
         .poster-container {
             width: 210mm;
             min-height: 297mm;
-			height: auto;
+            height: auto;
             background-color: #e8f5e9;
             margin: 0;
             padding: 0;
@@ -107,18 +107,12 @@
             flex-direction: column;
             gap: 5mm;
         }
-        .match-day {
-            margin-bottom: 0.5rem;
-            width: 100%;
-        }
         .match-day h2 {
             background-color: #2e7d32;
             color: white;
             padding: 0.5rem;
             text-align: center;
             margin: 0;
-            width: 100%;
-            box-sizing: border-box;
         }
         .match {
             display: flex;
@@ -130,26 +124,21 @@
             font-weight: bold;
             color: black;
             min-width: 2rem;
-			font-size: 1.5rem;
+            font-size: 1.5rem;
         }
         .red {
             color: red;
             font-weight: bold;
             flex: 1;
             text-align: left;
-			font-size: 1.5rem;
+            font-size: 1.5rem;
         }
         .blue {
             color: blue;
             font-weight: bold;
             flex: 1;
             text-align: left;
-			font-size: 1.5rem;
-        }
-        footer {
-            text-align: center;
-            margin: 0;
-            padding: 0;
+            font-size: 1.5rem;
         }
         footer img {
             width: 100%;
@@ -172,20 +161,16 @@
             <label for="blue-team">Bikote Urdina:</label>
             <input type="text" id="blue-team" name="blue-team" placeholder="Nombre de los jugadores en azul" required>
 
-            <button type="button" onclick="addMatch()">Partidua Geitu</button>
-            <!button type="button" onclick="generatePoster()">Generar HTML</button!>
+            <button type="button" id="submit-button" onclick="addMatch()">Partidua Geitu</button>
             <button type="button" onclick="generatePosterImage()">Kartela Sortu</button>
         </form>
 
         <div id="match-list">
             <h2>Partidu Sorta</h2>
-            <ul id="matches">
-                <!-- Los partidos añadidos aparecerán aquí -->
-            </ul>
+            <ul id="matches"></ul>
         </div>
     </div>
 
-    <!-- Poster invisible para generar la imagen -->
     <div id="poster" class="poster-container" style="display: none;">
         <header>
             <img src="hasiera.jpg" alt="Hasiera">
@@ -196,131 +181,149 @@
         </footer>
     </div>
 
-    <!-- Importar html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script>
-    let matches = JSON.parse(localStorage.getItem("matches")) || [];
+    <script>
+        let matches = JSON.parse(localStorage.getItem("matches")) || [];
+        let editingIndex = null;
 
-    function addMatch() {
-        const date = document.getElementById('date').value;
-        const redTeam = document.getElementById('red-team').value;
-        const blueTeam = document.getElementById('blue-team').value;
+        function renderMatches() {
+            const matchList = document.getElementById('matches');
+            matchList.innerHTML = '';
 
-        if (date && redTeam && blueTeam) {
-            matches.push({ date, redTeam, blueTeam });
-            matches.sort((a, b) => new Date(a.date) - new Date(b.date));
+            matches.forEach((match, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${match.date}: ${match.redTeam} vs ${match.blueTeam}`;
+
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Aldatu';
+                editButton.style.backgroundColor = '#ffb300';
+                editButton.onclick = () => loadMatchForEdit(index);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Eliminar';
+                deleteButton.onclick = () => deleteMatch(index);
+
+                li.appendChild(editButton);
+                li.appendChild(deleteButton);
+                matchList.appendChild(li);
+            });
+        }
+
+        function addMatch() {
+            const date = document.getElementById('date').value;
+            const redTeam = document.getElementById('red-team').value;
+            const blueTeam = document.getElementById('blue-team').value;
+            const submitBtn = document.getElementById('submit-button');
+
+            if (date && redTeam && blueTeam) {
+                if (editingIndex !== null) {
+                    matches[editingIndex] = { date, redTeam, blueTeam };
+                    editingIndex = null;
+                    submitBtn.textContent = 'Partidua Geitu';
+                } else {
+                    matches.push({ date, redTeam, blueTeam });
+                }
+
+                matches.sort((a, b) => new Date(a.date) - new Date(b.date));
+                localStorage.setItem("matches", JSON.stringify(matches));
+                renderMatches();
+                document.getElementById('match-form').reset();
+            } else {
+                alert('Por favor, completa todos los campos.');
+            }
+        }
+
+        function loadMatchForEdit(index) {
+            const match = matches[index];
+            document.getElementById('date').value = match.date;
+            document.getElementById('red-team').value = match.redTeam;
+            document.getElementById('blue-team').value = match.blueTeam;
+            editingIndex = index;
+            document.getElementById('submit-button').textContent = 'Gorde aldaketak';
+        }
+
+        function deleteMatch(index) {
+            matches.splice(index, 1);
             localStorage.setItem("matches", JSON.stringify(matches));
             renderMatches();
-            document.getElementById('match-form').reset();
-        } else {
-            alert('Por favor, completa todos los campos.');
         }
-    }
 
-    function renderMatches() {
-        const matchList = document.getElementById('matches');
-        matchList.innerHTML = '';
+        function groupMatchesByDate(matches) {
+            return matches.reduce((groups, match) => {
+                const matchDate = new Date(match.date);
+                const dateStr = match.date.split("T")[0];
+                const hour = matchDate.getHours();
+                const timeSlot = hour < 14 ? 'goizean' : 'arratsaldean';
+                const groupKey = `${dateStr}___${timeSlot}`;
+                if (!groups[groupKey]) groups[groupKey] = [];
+                groups[groupKey].push(match);
+                return groups;
+            }, {});
+        }
 
-        matches.forEach((match, index) => {
-            const li = document.createElement('li');
-            li.textContent = `${match.date}: ${match.redTeam} vs ${match.blueTeam}`;
+        function generatePoster() {
+            const posterContent = document.querySelector('.poster-content');
+            posterContent.innerHTML = '';
 
-            const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Eliminar';
-            deleteButton.onclick = () => deleteMatch(index);
+            const monthsInBasque = [
+                "URTARRILAK", "OTSAILAK", "MARTXOAK", "APIRILAK",
+                "MAIATZAK", "EKAINAK", "UZTAILAK", "ABUZTUAK",
+                "IRAILAK", "URRIAK", "AZAROAK", "ABENDUAK"
+            ];
 
-            li.appendChild(deleteButton);
-            matchList.appendChild(li);
-        });
-    }
+            const groupedMatches = groupMatchesByDate(matches);
 
-    function deleteMatch(index) {
-        matches.splice(index, 1);
-        localStorage.setItem("matches", JSON.stringify(matches));
-        renderMatches();
-    }
+            for (const key in groupedMatches) {
+                const [date, timeSlot] = key.split("___");
+                const dayMatches = groupedMatches[key];
+                const firstMatchDate = new Date(dayMatches[0].date);
+                const formattedTime = firstMatchDate.toLocaleTimeString('eu-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
 
-	function groupMatchesByDate(matches) {
-		return matches.reduce((groups, match) => {
-			const matchDate = new Date(match.date);
-			const dateStr = match.date.split("T")[0];
-			const hour = matchDate.getHours();
-			const timeSlot = hour < 14 ? 'goizean' : 'arratsaldean'; // En euskera directamente
-			const groupKey = `${dateStr}___${timeSlot}`; // separador único para evitar problemas con el formato de fecha
+                const dateObj = new Date(date);
+                const monthName = monthsInBasque[dateObj.getMonth()];
+                const dayNumber = dateObj.getDate();
 
-			if (!groups[groupKey]) groups[groupKey] = [];
-			groups[groupKey].push(match);
-			return groups;
-		}, {});
-	}
+                const timeSlotLabel = timeSlot === 'goizean' ? 'GOIZEAN' : 'ARRATSALDEAN';
+                const formattedDate = `${monthName} ${dayNumber} - ${timeSlotLabel} (${formattedTime})`;
 
-	function generatePoster() {
-		const posterContent = document.querySelector('.poster-content');
-		posterContent.innerHTML = '';
+                const dayContainer = document.createElement('div');
+                dayContainer.classList.add('match-day');
+                dayContainer.innerHTML = `<h2><b>${formattedDate}</b></h2>`;
 
-		const monthsInBasque = [
-			"URTARRILAK", "OTSAILAK", "MARTXOAK", "APIRILAK",
-			"MAIATZAK", "EKAINAK", "UZTAILAK", "ABUZTUAK",
-			"IRAILAK", "URRIAK", "AZAROAK", "ABENDUAK"
-		];
+                dayMatches.forEach((match, index) => {
+                    const matchDiv = document.createElement('div');
+                    matchDiv.classList.add('match');
+                    matchDiv.innerHTML = `
+                        <span class="match-number">${index + 1}</span>
+                        <span class="red">${match.redTeam}</span>
+                        <span class="blue">${match.blueTeam}</span>
+                    `;
+                    dayContainer.appendChild(matchDiv);
+                });
 
-		const groupedMatches = groupMatchesByDate(matches);
+                posterContent.appendChild(dayContainer);
+            }
 
-		for (const key in groupedMatches) {
-			const [date, timeSlot] = key.split("___"); // Usamos el separador único para evitar errores
-			const dayMatches = groupedMatches[key];
+            document.getElementById('poster').style.display = 'flex';
+        }
 
-			// ⚠️ Usamos el primer partido de este grupo, no de todos los partidos
-			const firstMatchDate = new Date(dayMatches[0].date);
-			const formattedTime = firstMatchDate.toLocaleTimeString('eu-ES', {
-				hour: '2-digit',
-				minute: '2-digit'
-			});
+        function generatePosterImage() {
+            generatePoster();
 
-			const dateObj = new Date(date);
-			const monthName = monthsInBasque[dateObj.getMonth()];
-			const dayNumber = dateObj.getDate();
+            const poster = document.getElementById('poster');
+            html2canvas(poster, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'partiduk.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 1.0);
+                link.click();
+                poster.style.display = 'none';
+            });
+        }
 
-			const timeSlotLabel = timeSlot === 'goizean' ? 'GOIZEAN' : 'ARRATSALDEAN';
-			const formattedDate = `${monthName} ${dayNumber} - ${timeSlotLabel} (${formattedTime})`;
-
-			const dayContainer = document.createElement('div');
-			dayContainer.classList.add('match-day');
-			dayContainer.innerHTML = `<h2><b>${formattedDate}</b></h2>`;
-
-			dayMatches.forEach((match, index) => {
-				const matchDiv = document.createElement('div');
-				matchDiv.classList.add('match');
-				matchDiv.innerHTML = `
-					<span class="match-number">${index + 1}</span>
-					<span class="red">${match.redTeam}</span>
-					<span class="blue">${match.blueTeam}</span>
-				`;
-				dayContainer.appendChild(matchDiv);
-			});
-
-			posterContent.appendChild(dayContainer);
-		}
-
-		document.getElementById('poster').style.display = 'flex';
-	}
-
-
-    function generatePosterImage() {
-        generatePoster();
-
-        const poster = document.getElementById('poster');
-        html2canvas(poster, { scale: 2 }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = 'partiduk.jpg';
-            link.href = canvas.toDataURL('image/jpeg', 1.0);
-            link.click();
-            poster.style.display = 'none';
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', renderMatches);
-</script>
-
+        document.addEventListener('DOMContentLoaded', renderMatches);
+    </script>
 </body>
 </html>
